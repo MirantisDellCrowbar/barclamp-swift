@@ -30,6 +30,12 @@ cookbook_file "/etc/default/rsync" do
   source "default-rsync"
 end
 
+directory "/var/lock/swift" do 
+  user     node[:swift][:user]
+  group    node[:swift][:group]
+  mode     "0644"
+end
+
 service "rsync" do
   action :start 
 end
