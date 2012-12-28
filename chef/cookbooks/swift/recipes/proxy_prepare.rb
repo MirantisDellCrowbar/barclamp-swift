@@ -15,34 +15,12 @@
 #
 # Author: andi abes
 #
-[DEFAULT]
-bind_ip = <%= @storage_net_ip %>
-bind_port = 6000
-workers = 2
 
-log_facility = LOG_LOCAL0
-log_level = DEBUG
-log_name = swift-o
-log_requests = true
-setup_console_handler = true
-
-
-[pipeline:main]
-pipeline = recon object-server
-
-[app:object-server]
-use = egg:swift#object
-log_level = DEBUG
-log_requests = true
-
-[filter:recon]
-use = egg:swift#recon
-#recon_cache_path = /var/cache/swift
-#recon_lock_path = /var/lock
-
-[object-replicator]
-
-[object-updater]
-
-[object-auditor]
-
+env_filter = " AND swift_config_environment:#{node[:swift][:config][:environment]}"
+compute_nodes = search(:node, "roles:swift-ring-compute#{env_filter}")
+if (!compute_nodes.nil? and compute_nodes.length > 0 )
+  if compute_nodes[0][:swift][:ring_init_done]
+    include_recipe 'swift::proxy'
+    include_recipe 'swift::monitor'
+  end
+end

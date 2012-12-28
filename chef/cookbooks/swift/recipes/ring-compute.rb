@@ -51,11 +51,11 @@ disk_assign_expr = node[:swift][:disk_zone_assign_expr]
 hash = node[:swift][:cluster_hash]
 
 log ("cluster config: replicas:#{replicas} zones:#{zones} hash:#{hash}")
-nodes.each { |node|    
-  storage_ip = Swift::Evaluator.get_ip_by_type(node, :storage_ip_expr)
+nodes.each { |n|    
+  storage_ip = Swift::Evaluator.get_ip_by_type(n, :storage_ip_expr)
   target_nodes << storage_ip
   log ("Looking at node: #{storage_ip}") {level :debug} 
-  disks=node[:swift][:devs] 
+  disks=n[:swift][:devs] 
   next if disks.nil?
   disks.each {|uuid,disk|
     Chef::Log.info("Swift - considering #{node[:fqdn]}:#{disk[:name]}")
@@ -137,3 +137,5 @@ target_nodes.each {|t|
     subscribes :run, resources(:swift_ringfile =>"object.builder")
   end 
 }
+
+node[:swift][:ring_init_done] = true
