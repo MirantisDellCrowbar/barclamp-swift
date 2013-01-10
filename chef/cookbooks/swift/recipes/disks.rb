@@ -30,15 +30,20 @@ def get_uuid(disk)
   nil
 end
 
-Chef::Log.info("locating disks using #{node[:swift][:disk_enum_expr]} test: #{node[:swift][:disk_test_expr]}")
+log("locating disks using #{node[:swift][:disk_enum_expr]} test: #{node[:swift][:disk_test_expr]}") {level :debug}
 to_use_disks = []
-all_disks = eval(node[:swift][:disk_enum_expr])
+all_disks = node["crowbar"]["disks"]
 all_disks.each { |k,v|
-  b = binding()
-  to_use_disks << k if eval(node[:swift][:disk_test_expr]) && ::File.exists?("/dev/#{k}")
+  to_use_disks << k if (v["usage"] == "Storage") && ::File.exists?("/dev/#{k}")
 }
 
-Chef::Log.info("Swift will use these disks: #{to_use_disks.join(" ")}")
+Chef::Log.info("Swift will use these disks: #{to_use_disks.join(":")}")
+
+# Make sure that the kernel is aware of the current state of the
+# drive partition tables.
+::Kernel.system("partprobe #{to_use_disks.map{|d|"/dev/#{d}"}.join(' ')}")
+# Let udev catch up, if needed.
+sleep 3
 
 node[:swift] ||= Mash.new
 node[:swift][:devs] ||= Mash.new
@@ -54,33 +59,37 @@ to_use_disks.each do |k|
   disk[:device] = target_dev_part
   disk[:uuid] = get_uuid(target_dev_part)
 
-  # Test to see if there is a partition table on the disk.
-  # If not, create a shiny new GPT partition table for the disk.
-  if ::Kernel.system("parted -s -m #{target_dev} print 1 |grep -q '^Error:'")
-    Chef::Log.info("Swift - Creating partition table on #{target_dev}")
-    ::Kernel.system("parted -s #{target_dev} -- unit s mklabel gpt mkpart primary ext2 2048s -1M")
-    ::Kernel.system("partprobe #{target_dev}")
-    sleep 3
-    ::Kernel.system("dd if=/dev/zero of=#{target_dev_part} bs=1024 count=65")
-    disk[:uuid] = nil
-  end
-
-  # Test to see if there is a file system, and create one if there is not.
-  if disk[:uuid] && ! node[:swift][:devs][disk[:uuid]]
-    # If there is already a file system and we don't already know about it,
-    # then it belongs to someone else.  Print a log entry and skip it.
-    Chef::Log.info("Swift - drive #{target_dev_part} alreay exists, and we don't own it.")
-    Chef::Log.info("Please zero out the first and last meg of the drive if you want to use it for Swift")
-    next
-  elsif disk[:uuid].nil?
-    # No filesystem.  Format that bad boy and claim it as our own.
-    Chef::Log.info("Swift - formatting #{target_dev_part}")
+  if disk[:uuid].nil?
+    if ::Kernel.system("parted -l -m | grep #{target_dev} | grep 'unrecognised disk label'")
+      Chef::Log.info("Unknown disk label or empty disk. Try to create GPT label on #{target_dev}")
+      ::Kernel.exec "parted -s #{target_dev} -- mklabel gpt")
+    end
+    if ::Kernel.system("parted -l -m | grep -A1 #{target_dev} | grep 1:")
+      unless ::Kernel.system("parted -l -m | grep -A1 #{target_dev} | grep 1: | grep xfs")
+        # probably there's some unsupported file system on the first partition - don't touch it
+        Chef::Log.info("Unable to read disk #{target_dev} UUID, although device seem to have data on it - skipping")
+        next
+      end
+    else
+      # Create partition table
+      Chef::Log.info("Initializing device with new partition table")
+      ::Kernel.system("parted -s #{target_dev} -- unit s mklabel gpt mkpart primary ext2 2048s -1M")
+      ::Kernel.system("partprobe #{target_dev}")
+      sleep 3
+      ::Kernel.system("dd if=/dev/zero of=#{target_dev_part} bs=1024 count=65")
+    end
+    # Create xfs partition
     ::Kernel.exec "mkfs.xfs -i size=1024 -f #{target_dev_part}" unless ::Process.fork
     disk[:state] = "Fresh"
     wait_for_format = true
     found_disks << disk.dup
-  else
+    disk[:uuid] = get_device_uuid(device)
+  elsif node[:swift][:devs][disk[:uuid]]
+    # the disk is known and used
     Chef::Log.info("Swift - #{target_dev_part} already known and used by Swift.")
+  else
+    # the disk is unknown but definitely has a certain structure - just don't touch it
+    Chef::Log.info("Disk ${device} seems to have data on it - skipping")
   end
 end
 
