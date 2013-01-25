@@ -77,6 +77,8 @@ end
 package "python-swiftclient"
 
 #TODO(agordeev): remove that workaround once packaged swiftclient be ready
+# repo url: http://github.com/openstack/python-swiftclient
+# actual commit hash: 57dfd21e1bea1b53709e0836a7e521c2c6e48309
 cookbook_file "/usr/lib/python2.7/dist-packages/swiftclient/client.py" do
   mode "0664"
   source "client.py"
