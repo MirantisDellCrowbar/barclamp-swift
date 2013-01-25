@@ -19,7 +19,7 @@ class Rack_awareness
         #PP.pp(nodes.size, $>, 40)
         nodes.each do |n|
             sw_name=self.get_node_sw(n)
-            if sw_name == -2
+            if sw_name == -1
                 next
             end
             if switch_list["#{sw_name}"].nil?
@@ -90,7 +90,7 @@ class Rack_awareness
         n=params[:target_node]
         sw_name=self.get_node_sw(n)
         zone_count=@node[:swift][:zones]
-        if sw_name == -2
+        if sw_name == -1
             #just assign to somewhere
             zone=@rr_counter % zone_count
             @rr_counter += 1
