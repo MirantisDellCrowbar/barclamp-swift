@@ -51,18 +51,19 @@ disk_assign_expr = node[:swift][:disk_zone_assign_expr]
 hash = node[:swift][:cluster_hash]
 
 log ("cluster config: replicas:#{replicas} zones:#{zones} hash:#{hash}")
-nodes.each { |node|    
-  storage_ip = Swift::Evaluator.get_ip_by_type(node, :storage_ip_expr)
+nodes.each { |n|    
+  storage_ip = Swift::Evaluator.get_ip_by_type(n, :storage_ip_expr)
   target_nodes << storage_ip
   log ("Looking at node: #{storage_ip}") {level :debug} 
-  disks=node[:swift][:devs] 
+  disks=n[:swift][:devs] 
   next if disks.nil?
   disks.each {|uuid,disk|
     Chef::Log.info("Swift - considering #{node[:fqdn]}:#{disk[:name]}")
     next unless disk[:state] == "Operational"
-    z_o, w_o = Swift::Evaluator.eval_with_params(disk_assign_expr, node(), :ring=> "object", :disk=>disk)    
-    z_c,w_c = Swift::Evaluator.eval_with_params(disk_assign_expr, node(), :ring=> "container", :disk=>disk)
-    z_a,w_a = Swift::Evaluator.eval_with_params(disk_assign_expr, node(), :ring=> "account", :disk=>disk)
+    #we need at least node for which we trying to predict zone to avoid odd searching across chef by disk uuid
+    z_o, w_o = Swift::Evaluator.eval_with_params(disk_assign_expr, node(), :ring=> "object", :disk=>disk, :target_node=>n)
+    z_c,w_c = Swift::Evaluator.eval_with_params(disk_assign_expr, node(), :ring=> "container", :disk=>disk, :target_node=>n)
+    z_a,w_a = Swift::Evaluator.eval_with_params(disk_assign_expr, node(), :ring=> "account", :disk=>disk, :target_node=>n)
     
     log("obj: #{z_o}/#{w_o} container: #{z_c}/#{w_c} account: #{z_a}/#{w_a}. count: #{$DISK_CNT}") {level :info}
     d = {:ip => storage_ip, :dev_name=> disk[:name], :port => 6000}
@@ -137,3 +138,5 @@ target_nodes.each {|t|
     subscribes :run, resources(:swift_ringfile =>"object.builder")
   end 
 }
+
+node[:swift][:ring_init_done] = true

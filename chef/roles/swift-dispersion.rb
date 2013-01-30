@@ -1,5 +1,5 @@
 #
-# Copyright 2011, Dell
+# Copyright 2012, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,36 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Author: andi abes
-#
-[DEFAULT]
-bind_ip = <%= @storage_net_ip %>
-bind_port = 6000
-workers = 2
 
-log_facility = LOG_LOCAL0
-log_level = DEBUG
-log_name = swift-o
-log_requests = true
-setup_console_handler = true
-
-
-[pipeline:main]
-pipeline = recon object-server
-
-[app:object-server]
-use = egg:swift#object
-log_level = DEBUG
-log_requests = true
-
-[filter:recon]
-use = egg:swift#recon
-#recon_cache_path = /var/cache/swift
-#recon_lock_path = /var/lock
-
-[object-replicator]
-
-[object-updater]
-
-[object-auditor]
+name "swift-dispersion"
+description "provides the health check service to swift"
+run_list(
+    "recipe[swift::dispersion]"
+)
 

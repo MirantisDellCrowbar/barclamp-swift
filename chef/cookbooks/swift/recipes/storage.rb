@@ -71,7 +71,7 @@ if (!compute_nodes.nil? and compute_nodes.length > 0 )
   svcs.each { |x| 
     service x do
       if (platform?("ubuntu") && node.platform_version.to_f >= 10.04)
-        restart_command "status #{x} 2>&1 | grep -q Unknown || restart #{x}"
+        restart_command "stop #{x} ; start #{x}"
         stop_command "stop #{x}"
         start_command "start #{x}"
         status_command "status #{x} | cut -d' ' -f2 | cut -d'/' -f1 | grep start"

@@ -21,6 +21,5 @@ description "configures a swift storage node, including partitioning disks, form
 
 run_list(
     "recipe[swift::default]",
-    "recipe[swift::storage]",
-    "recipe[swift::monitor]"
+    "recipe[swift::storage_prepare]"
 )

@@ -16,18 +16,15 @@
 # Author: andi abes
 #
 
-name "swift-proxy-acct"
+include_recipe 'swift::disks'
+#include_recipe 'swift::auth' 
+include_recipe 'swift::rsync'
 
-description <<AAE
-Provides the proxy and authentication components to swift. 
-This proxy role enables account management, thus it should be deployed with security considerations in mind
-AAE
-
-run_list(
-    "recipe[swift::default]",
-    "recipe[swift::proxy]",
-    "recipe[swift::monitor]"
-)
-
-override_attributes "swift" => { "account_management" => "true" }
-
+env_filter = " AND swift_config_environment:#{node[:swift][:config][:environment]}"
+compute_nodes = search(:node, "roles:swift-ring-compute#{env_filter}")
+if (!compute_nodes.nil? and compute_nodes.length > 0 )
+  if compute_nodes[0][:swift][:ring_init_done]
+    include_recipe 'swift::storage'
+    include_recipe 'swift::monitor'
+  end
+end
