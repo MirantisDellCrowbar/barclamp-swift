@@ -130,6 +130,9 @@ debs:
   ubuntu-12.04:
     repos:
       - deb http://ubuntu-cloud.archive.canonical.com/ubuntu precise-updates/folsom main
+  ubuntu-12.10:
+    repos:
+      - deb http://ubuntu-cloud.archive.canonical.com/ubuntu quantal-updates/folsom main
   pkgs:
     - curl
     - swift
