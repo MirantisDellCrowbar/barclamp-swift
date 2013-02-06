@@ -18,6 +18,7 @@
 
 include_recipe 'utils'
 include_recipe 'swift::auth'
+include_recipe 'swift::rsync'
 
 
 local_ip = Swift::Evaluator.get_ip_by_type(node, :admin_ip_expr)
@@ -179,6 +180,26 @@ node[:memcached][:listen] = local_ip
 node[:memcached][:name] = "swift-proxy"
 memcached_instance "swift-proxy" do
 end
+
+
+
+## make sure to fetch ring files from the ring compute node
+env_filter = " AND swift_config_environment:#{node[:swift][:config][:environment]}"
+compute_nodes = search(:node, "roles:swift-ring-compute#{env_filter}")
+if (!compute_nodes.nil? and compute_nodes.length > 0 and node[:fqdn]!=compute_nodes[0][:fqdn] )
+  compute_node_addr  = Swift::Evaluator.get_ip_by_type(compute_nodes[0],:storage_ip_expr)
+  log("ring compute found on: #{compute_nodes[0][:fqdn]} using: #{compute_node_addr}") {level :debug}
+  %w{container account object}.each { |ring|
+    execute "pull #{ring} ring" do
+      command "rsync #{node[:swift][:user]}@#{compute_node_addr}::ring/#{ring}.ring.gz ."
+      cwd "/etc/swift"
+      ignore_failure true
+    end
+  }
+end
+
+
+
 
 
 service "swift-proxy" do
