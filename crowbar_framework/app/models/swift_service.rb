@@ -103,11 +103,10 @@ class SwiftService < ServiceObject
     # Make sure that the front-end pieces have public ip addreses.
     net_svc = NetworkService.new @logger
     tnodes = role.override_attributes["swift"]["elements"]["swift-proxy"]
-    next if tnodes.nil? or tnodes.empty?
     tnodes.each do |n|
       next if n.nil?
       net_svc.allocate_ip "default", "public", "host", n
-    end
+    end unless tnodes.nil? or tnodes.empty?
 
     all_nodes.each do |n|
       net_svc.allocate_ip "default", "storage", "host", n
