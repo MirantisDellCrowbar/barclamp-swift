@@ -99,6 +99,8 @@
       "admin_ip_expr": "Chef::Recipe::Barclamp::Inventory.get_network_by_type(node, \"admin\").address",
       "storage_ip_expr": "Chef::Recipe::Barclamp::Inventory.get_network_by_type(node, \"storage\").address",
       "public_ip_expr": "Chef::Recipe::Barclamp::Inventory.get_network_by_type(node, \"public\").address",
+      "disk_enum_expr": "node[\"crowbar\"][\"disks\"]",
+      "disk_test_expr": "v[\"usage\"] == \"Storage\"",
       "disk_zone_assign_expr":  "$rack_aware=Rack_awareness::By_switch.new(node) if $rack_aware.nil? ;[ $rack_aware.node_to_zone(params) , 99]"
     }
   },
