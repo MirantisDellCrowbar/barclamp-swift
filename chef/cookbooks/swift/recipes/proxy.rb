@@ -20,13 +20,13 @@ include_recipe 'utils'
 include_recipe 'swift::auth'
 
 loadbalancers = search(:node, "roles:loadbalancer")
-local_ip = Swift::Evaluator.get_ip_by_type(node, :admin_ip_expr)
 if loadbalances.length > 0
   loadbalancer = loadbalancers[0]
-  public_ip = loadbalancer[:keepalived][:vrrp_instances][:virtual_ipaddress]
+  public_ip = loadbalancer[:keepalived][:virtual_ipaddress]
 else
   public_ip = Swift::Evaluator.get_ip_by_type(node, :public_ip_expr)
 end
+local_ip = Swift::Evaluator.get_ip_by_type(node, :admin_ip_expr)
 
 ### 
 # bucket to collect all the config items that end up in the proxy config template
