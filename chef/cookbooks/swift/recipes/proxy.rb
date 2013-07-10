@@ -47,12 +47,13 @@ end
 ###
 #check if there is a balancer wich pointing to our instance
 my_env=node[:swift][:config][:environment].gsub('swift-config-', '')
-lb = search(:node, "roles:lb-master AND swift_instance:#{my_env}").first || []
-if lb.size > 0
-  local_ip=lb["loadbalancer"]["admin_ip"]
-  public_ip=lb["loadbalancer"]["public_ip"]
-  admin_host=lb["loadbalancer"]["admin_host"]
-  public_host=lb["loadbalancer"]["public_host"]
+lbs = search(:node, "roles:lb-master AND swift_instance:#{my_env}") || []
+if lbs.size > 0
+  lb = lbs.first
+  local_ip = lb["loadbalancer"]["admin_ip"]
+  public_ip = lb["loadbalancer"]["public_ip"]
+  admin_host = lb["loadbalancer"]["admin_host"]
+  public_host = lb["loadbalancer"]["public_host"]
 end
 
 
@@ -157,9 +158,10 @@ case proxy_config[:auth_method]
      
      keystone_host = keystone[:fqdn]
 
-     lb = search(:node, "roles:lb-master AND keystone_instance:#{node[:swift][:keystone_instance]}").first || []
-     if lb.size > 0
-       keystone_host=lb["loadbalancer"]["admin_host"]
+     lbs = search(:node, "roles:lb-master AND keystone_instance:#{node[:swift][:keystone_instance]}") || []
+     if lbs.size > 0
+       lb = lbs.first
+       keystone_host = lb["loadbalancer"]["admin_host"]
        Chef::Log.info("Loadbalancer server found at #{keystone_host}")
      end
 
