@@ -39,6 +39,24 @@ if public_host.nil? or public_host.empty?
   end
 end
 
+###
+#TODO:
+#we fully understand that if there is ssl and certificates were signed for fqdn of each node
+#the loadbalancer will not work
+#i suppose a bit later we add ssl support into loadbalancer, but for now lb will not work in case of ssl
+###
+#check if there is a balancer wich pointing to our instance
+my_env=node[:swift][:config][:environment].gsub('swift-config-', '')
+lb = search(:node, "roles:lb-master AND swift_instance:#{my_env}").first || []
+if lb.size > 0
+  local_ip=lb["loadbalancer"]["admin_ip"]
+  public_ip=lb["loadbalancer"]["public_ip"]
+  admin_host=lb["loadbalancer"]["admin_host"]
+  public_host=lb["loadbalancer"]["public_host"]
+end
+
+
+
 ### 
 # bucket to collect all the config items that end up in the proxy config template
 proxy_config = {}
@@ -138,6 +156,14 @@ case proxy_config[:auth_method]
      end
      
      keystone_host = keystone[:fqdn]
+
+     lb = search(:node, "roles:lb-master AND keystone_instance:#{node[:swift][:keystone_instance]}").first || []
+     if lb.size > 0
+       keystone_host=lb["loadbalancer"]["admin_host"]
+       Chef::Log.info("Loadbalancer server found at #{keystone_host}")
+     end
+
+
      keystone_protocol = keystone["keystone"]["api"]["protocol"]
      keystone_token = keystone["keystone"]["service"]["token"] rescue nil
      keystone_service_port = keystone["keystone"]["api"]["service_port"] rescue nil
