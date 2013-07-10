@@ -26,7 +26,7 @@ keystone_host = keystone[:fqdn]
 
 lb = search(:node, "roles:lb-master AND keystone_instance:#{node[:swift][:keystone_instance]}").first || []
 if lb.size > 0
-keystone_host=lb["loadbalancer"]["admin_host"]
+  keystone_host=lb["loadbalancer"]["admin_host"]
   Chef::Log.info("Loadbalancer server found at #{keystone_host}")
 end
 
