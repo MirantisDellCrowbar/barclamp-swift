@@ -171,4 +171,4 @@ debs:
     - uwsgi-plugin-python
 
 git_repo:
-  - swift https://github.com/openstack/swift.git 2013.2.b2
+  - swift https://github.com/openstack/swift.git 1.9.0
