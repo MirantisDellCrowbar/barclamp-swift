@@ -77,7 +77,7 @@ to_use_disks.each do |k|
   elsif disk[:uuid].nil?
     # No filesystem.  Format that bad boy and claim it as our own.
     Chef::Log.info("Swift - formatting #{target_dev_part}")
-    ::Kernel.exec "mkfs.xfs -i size=1024 -f #{target_dev_part}" unless ::Process.fork
+    ::Kernel.system("mkfs.xfs -i size=1024 -f #{target_dev_part}")
     disk[:state] = "Fresh"
     wait_for_format = true
     found_disks << disk.dup
