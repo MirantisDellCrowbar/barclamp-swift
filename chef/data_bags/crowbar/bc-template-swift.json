@@ -52,7 +52,7 @@
       },
       "gitrepo": "http://github.com/openstack/swift.git",
       "git_instance": "",
-      "git_refspec": "1.9.0",
+      "git_refspec": "1.9.2",
       "use_gitrepo": false,
       "use_gitbarclamp": false,
       "use_pip_cache": false,
