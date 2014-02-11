@@ -65,6 +65,7 @@
           "xfsprogs",
           "libffi-dev",
           "libffi6",
+          "libmysqlclient-dev",
           "pip://setuptools-git",
           "pip://distribute>=0.6.28",
           "pip://MySQL-python",
